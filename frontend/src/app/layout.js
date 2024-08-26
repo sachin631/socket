@@ -1,5 +1,6 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
+import Providers from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -14,7 +15,9 @@ export default function RootLayout({ children }) {
      
       <body className={inter.className}>
         <h1 className="text-black font-extrabold text-center text-5xl">Socket.io chat practice</h1>
+        <Providers>
         {children}
+        </Providers>
       </body>
     </html>
   );

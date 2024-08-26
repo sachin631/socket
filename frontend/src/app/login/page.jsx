@@ -1,5 +1,5 @@
 'use client'
-import axios_client from '@/lib/client-lib'
+import axios_client from '../lib/client-lib'
 import { Button } from 'antd'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
