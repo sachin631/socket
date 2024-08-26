@@ -24,9 +24,10 @@ const userController = {
         .status(200)
         .json({ message: "user register failed", data: user });
     }
-    return res
-      .status(200)
-      .json({ message: "user register successfully try to login..", data: user });
+    return res.status(200).json({
+      message: "user register successfully try to login..",
+      data: user,
+    });
   },
 
   user_login: async (req, res) => {
@@ -57,14 +58,12 @@ const userController = {
 
     res
       .cookie("access_token", access_token, {
-        expireIn: '1d',
+        expireIn: "1d",
         httpOnly: true,
-        
       })
       .cookie("refresh_token", refresh_token, {
-        expireIn: '10d',
+        expireIn: "10d",
         httpOnly: true,
-        
       });
 
     return res.status(200).json({ message: "login successfully", user: user });
@@ -72,19 +71,40 @@ const userController = {
 
   user_logout: async (req, res) => {
     res.clearCookie("access_token").clearCookie("refresh_token");
-    res.status(200).json({message:"logot successfully"});
+    res.status(200).json({ message: "logot successfully" });
   },
 
-  user_list:async(req,res)=>{
-    // try{
-    //   const users = await userAuthModel.find();
+  user_list: async (req, res) => {
+    try {
+      const users = await userAuthModel.find({});
+      if (!users) {
+        return res.status(400).json({ message: "user not found" });
+      }
+      return res.status(200).json({ data: users });
+    } catch (err) {
+      return res.status(400).json({ message: err.message });
+    }
+  },
 
-    // }catch(err){
-    //   return res.status(400).json({message:err.message});
-    // }
-  }
-
-
+  user_details: async (req,res) => {
+    try {
+      let login_user_id=req.loginUser
+     
+      const user = await userAuthModel.findOne({ _id: login_user_id });
+      if (!user) {
+        res.status(400).json({ message: "user not found or invalid _id" });
+      }
+      const user_details = await userAuthModel.findById({ _id: login_user_id });
+      if (!user_details) {
+        res.status(400).json({ message: "user not found " });
+      }
+      res
+        .status(200)
+        .json({ data: user, message: "user fetched successfully" });
+    } catch (err) {
+      return res.status(400).json({ message: err.message });
+    }
+  },
 };
 
 module.exports = { ...userController };

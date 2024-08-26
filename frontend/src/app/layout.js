@@ -13,8 +13,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
      
-      <body className={inter.className}>
-        <h1 className="text-black font-extrabold text-center text-5xl">Socket.io chat practice</h1>
+      <body className={inter.className} >
+        <h1 className="text-black font-extrabold text-center text-4xl font-[poppins]">Socket.io chat practice</h1> 
         <Providers>
         {children}
         </Providers>

@@ -7,12 +7,12 @@ import { useForm } from "react-hook-form";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios_client from "../lib/client-lib";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const Register = () => {
   const { handleSubmit, register, formState: { errors } } = useForm();
   const router = useRouter();
-
+const queryClient= useQueryClient();
   const mutation = useMutation({
     mutationFn:async(data)=>{
       console.log("/asdasdasdasd+++++++++++++++++")
@@ -22,6 +22,7 @@ const Register = () => {
     },
     onSuccess: () => {
       toast.success("Form submitted successfully");
+      queryClient.invalidateQueries(['user_list'])
       setTimeout(() => {
         router.push("/login");
       }, 1000);
@@ -61,7 +62,7 @@ const Register = () => {
               {...register('last_name', { required: "Last name is required" })}
               className="input-class"
             />
-            {errors.last_name && <p className="text-red-500">{errors.last_name.message}</p>}
+            { errors.last_name && <p className="text-red-500">{errors.last_name.message}</p> }
           </div>
           <div>
             <input
