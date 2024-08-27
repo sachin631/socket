@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import { useEffect, useState } from 'react';
 import io from 'socket.io-client';
 
@@ -7,10 +7,10 @@ const useSocket = (user_id) => {
 
   useEffect(() => {
     if (user_id) {
-        console.log('connected')
-      const socketInstance = io('http://localhost:3000', {
+      console.log('Connecting to socket server...');
+      const socketInstance = io('http://localhost:5050', {
         query: { user_id },
-        transports: ['websocket'],
+        transports: ['websocket', 'polling'],
       });
 
       setSocket(socketInstance);
@@ -23,13 +23,26 @@ const useSocket = (user_id) => {
         console.log('Disconnected from socket server');
       });
 
+      socketInstance.on('receive_message', (message) => {
+        console.log('Message received:', message);
+        // Update state or UI to handle the received message
+      });
+
       return () => {
+        console.log('Disconnecting from socket server...');
         socketInstance.disconnect();
       };
     }
   }, [user_id]);
 
-  return socket;
+  const sendMessage = (message) => {
+    if (socket) {
+      socket.emit('send_message', message);
+      console.log('Message sent:', message);
+    }
+  };
+
+  return { socket, sendMessage };
 };
 
 export default useSocket;

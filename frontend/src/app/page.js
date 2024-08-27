@@ -1,14 +1,17 @@
-'use client'
+'use client';
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
-import { Button } from 'antd';
+import { Button, Input } from 'antd';
 import axios_client from './lib/client-lib';
-import useSocket from './lib/socket'; // Updated import
+import useSocket from './lib/socket';
 
 export default function Home() {
-  const [email, setEmail] = useState();
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [chatHistory, setChatHistory] = useState([]);
+  const [receiverId, setReceiverId] = useState('');
 
-  const { data, isLoading } = useQuery({
+  const { data: usersData, isLoading: isUsersLoading } = useQuery({
     queryKey: ['users_list'],
     queryFn: async () => {
       const res = await axios_client.get('/user/user_list');
@@ -16,7 +19,7 @@ export default function Home() {
     },
   });
 
-  const { data: user_info_data, isLoading: user_info_isLoading, isSuccess: user_info_isSuccess } = useQuery({
+  const { data: userInfoData, isLoading: isUserInfoLoading } = useQuery({
     queryKey: ['user_info'],
     queryFn: async () => {
       const res = await axios_client.get('/user/details');
@@ -24,9 +27,48 @@ export default function Home() {
     },
   });
 
-  const socket = useSocket(user_info_data?.data?._id);
+  const { socket, sendMessage } = useSocket(userInfoData?.data?._id);
 
-  if (isLoading || user_info_isLoading) {
+  useEffect(() => {
+    if (socket) {
+      socket.on('receive_message', (receivedMessage) => {
+        console.log('Received message:', receivedMessage);
+        setChatHistory((prev) => [...prev, receivedMessage]);
+      });
+
+      return () => {
+        socket.off('receive_message');
+      };
+    }
+  }, [socket]);
+
+  useEffect(() => {
+    const fetchChatHistory = async () => {
+      if (receiverId) {
+        try {
+          const res = await axios_client.get(`/chat/history/${receiverId}`);
+          setChatHistory(res.data);
+        } catch (error) {
+          console.error('Failed to fetch chat history:', error);
+        }
+      }
+    };
+
+    fetchChatHistory();
+  }, [receiverId]);
+
+  const handleSendMessage = () => {
+    const messageData = {
+      sender_id: userInfoData?.data?._id,
+      receiver_id: receiverId,
+      message,
+    };
+
+    sendMessage(messageData);
+    setMessage(''); // Clear the input after sending the message
+  };
+
+  if (isUsersLoading || isUserInfoLoading) {
     return <h1>Loading...</h1>;
   }
 
@@ -44,47 +86,40 @@ export default function Home() {
 
                 <div>
                   <ul>
-                    {data?.data.map((curelem) => (
+                    {usersData?.data.map((user) => (
                       <li
-                        key={curelem.email}
+                        key={user._id}
                         className="py-4 cursor-pointer rounded-md bg-black text-white hover:bg-[brown] mt-2"
-                        onClick={() => setEmail(curelem.email)}
+                        onClick={() => {
+                          setEmail(user.email);
+                          setReceiverId(user._id);
+                        }}
                       >
-                        {curelem.email}
+                        {user.email}
                       </li>
                     ))}
                   </ul>
-                </div>
-
-                <div>
-                  <h1 className="text-center text-bold text-4xl mt-6">Channels</h1>
-                  <br />
-                  <hr className="border-t-2 border-blue-500" />
-                  <br />
-
-                  <div>
-                    <ul>
-                      {/* Example channel list */}
-                      {[...Array(9)].map((_, index) => (
-                        <li
-                          key={index}
-                          className="py-4 cursor-pointer bg-black text-white hover:bg-[brown] mt-4"
-                        >
-                          User {index + 1}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
                 </div>
               </div>
             </div>
             <div className="border-solid border-black border px-10 w-[60vw]">
               <div>
                 <div className="text-left text-4xl py-4">{email}</div>
-                <div className="h-[60vh] border border-blue-400">Chat container</div>
-                <div>
-                  <input type="text" placeholder="Enter message" />
-                  <Button type="primary" className="px-4 ml-4">
+                <div className="h-[60vh] border border-blue-400 overflow-auto">
+                  {chatHistory.map((msg, index) => (
+                    <div key={index} className="message">
+                      <strong>{msg.sender_id?.email}: </strong>
+                      {msg.message}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex mt-4">
+                  <Input
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Enter message"
+                  />
+                  <Button type="primary" className="px-4 ml-4" onClick={handleSendMessage}>
                     SEND
                   </Button>
                 </div>

@@ -7,6 +7,7 @@ const PORT = process.env.PORT;
 const cookie_parser = require("cookie-parser");
 const cors = require("cors");
 const setup_socket=require('./socket');
+const moment = require("moment/moment");
 
 //basic middlewares
 app.use(express.json());
@@ -16,6 +17,8 @@ app.use(cors({
   credentials: true, // Allow credentials (cookies) to be sent
 }));
 app.use(cookie_parser());
+
+
 
 //Application Middlewares
 app.use("/api/v1/", user_auth_router);

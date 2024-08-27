@@ -1,4 +1,5 @@
 const userAuthModel = require("../models/user.auth.model");
+const message_model = require("../models/user.messages.model");
 
 const userController = {
   user_register: async (req, res) => {
@@ -105,6 +106,27 @@ const userController = {
       return res.status(400).json({ message: err.message });
     }
   },
+
+  chatHistory:async (req, res) => {
+    console.log('app is working here')
+    try {
+        const userId = req.params.userId;
+        console.log(userId)
+        const messages = await message_model.find({
+            $or: [
+                { sender_id: userId },
+                { receiver_id: userId }
+            ]
+        }).populate('sender_id').populate('receiver_id').sort({ createdAt: 1 });
+
+        res.json(messages);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+}
+
+
+
 };
 
 module.exports = { ...userController };
